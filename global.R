@@ -43,3 +43,12 @@ message(paste0("Interactive: ", interactive()))
 # By default, the file size limit is 5MB.
 mb_limit <- 200
 options(shiny.maxRequestSize = mb_limit * 1024^2)
+
+# Load files ----
+fn_samps <- "samples.csv"
+fn_sites <- "sites.csv"
+fn_metrics <- "metrics.csv"
+
+df_samps <- read.csv(file = file.path("Data", fn_samps))
+df_sites <- read.csv(file = file.path("Data", fn_sites))
+df_metrics <- read.csv(file = file.path("Data", fn_metrics))

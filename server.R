@@ -1,6 +1,115 @@
 library(shiny)
 
-shinyServer(function(input, output) {
- 
+shinyServer(function(input, output, session) {
+  # Filters ----
+  updateSelectInput(session, "select_sampid"
+                    , choices = c("", df_sites$SampleID))
+  
+  # Filter tables ----
+  ## df_samps ----
+  df_samps_editable <- reactiveVal(df_samps)
+  
+  df_samps_filtr <- reactive({
+    if (is.null(input$select_sampid) || input$select_sampid == "") {
+      return(df_samps_editable())
+    } else {
+      return(df_samps_editable()[df_samps_editable()$SampleID == input$select_sampid, ])
+    }
+  }) # reactive~END
+  
+  ## df_sites ----
+  df_sites_filtr <- reactive({
+    if (input$select_sampid == "") {
+      return(df_sites)
+    } else {
+      return(df_sites[df_sites$SampleID == input$select_sampid, ])
+    }
+  }) # reactive~END
+  
+  ## df_metrics ----
+  df_metrics_filtr <- reactive({
+    if (input$select_sampid == "") {
+      return(df_metrics)
+    } else {
+      return(df_metrics[df_metrics$SampleID == input$select_sampid, ])
+    }
+  }) # reactive~END
+  
+  # Display tables ----
+  ## Samps ----
+  output$df_DT_samps <- DT::renderDT({
+    df_samps_filtr()
+  }, 
+  filter = "none",
+  editable = TRUE,
+  options = list(
+    scrollX = TRUE,
+    pageLength = 25,
+    lengthMenu = c(25, 50, 100, 1000),
+    autoWidth = FALSE,
+    searching = FALSE
+  )) #df_DT_samps~END
+  
+  ## Metrics ----
+  output$df_DT_metrics <- DT::renderDT({
+    df_metrics_filtr()
+    # df_metrics
+  }##expression~END
+  , filter = "none"
+  , options = list(scrollX = TRUE
+                   , pageLength = 5
+                   , lengthMenu = c(5, 10, 25, 50, 100, 1000)
+                   , autoWidth = FALSE
+                   , searching = FALSE)
+  )##df_DT_metrics~END
+  
+  ## Sites ----
+  output$df_DT_sites <- DT::renderDT({
+    df_sites_filtr()
+    # df_sites
+  }##expression~END
+  , filter = "none"
+  , options = list(scrollX = TRUE
+                   , pageLength = 5
+                   , lengthMenu = c(5, 10, 25, 50, 100, 1000)
+                   , autoWidth = FALSE
+                   , searching = FALSE)
+  )##df_DT_sites~END
+  
+  # Edit tables ----
+  # Update the data based on edits
+  observeEvent(input$df_DT_samps_cell_edit, {
+    cell <- input$df_DT_samps_cell_edit
+    newdf <- df_samps_editable()
+    newdf[cell$row, cell$col] <- cell$value
+    df_samps_editable(newdf)
+  }) #observeEvent ~ END
+  
+  # Downloads ----
+  ## General Download ----
+  output$dwnld_gencom <- downloadHandler(
+    filename = function() {
+      if (input$select_sampid == "") {
+        "default.txt"
+      } else {
+        paste0(input$select_sampid, ".txt")
+      }
+    }# function ~ END
+    , content = function(file) {
+      cat(input$notes_gencom, file = file)
+      }# function ~ END
+  ) # downloadHandler ~ END
+  
+  ## Edited sample table ----
+  # Download the edited data
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste("df_samps_edits", input$select_sampid, Sys.Date()
+            , ".csv", sep = "_")
+    },
+    content = function(file) {
+      write.csv(df_samps_editable(), file, row.names = FALSE)
+    }
+  )
 
 })##shinyServer ~ END

@@ -6,7 +6,6 @@
 # menu in db_main_sb.R
 
 function(id) {
-
     tabItems(
       tabItem(tabName = "tab_primary"
               , tab_code_primary())
