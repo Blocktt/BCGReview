@@ -35,20 +35,26 @@ shinyServer(function(input, output, session) {
     }
   }) # reactive~END
   
+  ## df_particips ----
+  df_particips_editable <- reactiveVal(df_particips_v2)
+  
   # Display tables ----
   ## Samps ----
   output$df_DT_samps <- DT::renderDT({
-    df_samps_filtr()
-  }, 
-  filter = "none",
-  editable = TRUE,
-  options = list(
-    scrollX = TRUE,
-    pageLength = 25,
-    lengthMenu = c(25, 50, 100, 1000),
-    autoWidth = FALSE,
-    searching = FALSE
-  )) #df_DT_samps~END
+    DT::datatable(
+      df_samps_filtr(),
+      filter = "none",
+      editable = TRUE,
+      options = list(
+        scrollX = TRUE,
+        pageLength = 25,
+        lengthMenu = c(25, 50, 100, 500),
+        autoWidth = FALSE,
+        searching = FALSE
+      )) %>% DT::formatStyle("BCG.Attribute"
+        , backgroundColor = styleEqual(c(1, 2, 3, 4, 5, 6)
+          , c('#006600', '#33ff33', '#ffff00', '#ff6600', '#ff0000', '#990000')))
+  }) # renderDT ~ END
   
   ## Metrics ----
   output$df_DT_metrics <- DT::renderDT({
@@ -56,6 +62,7 @@ shinyServer(function(input, output, session) {
     # df_metrics
   }##expression~END
   , filter = "none"
+  , rownames = FALSE
   , options = list(scrollX = TRUE
                    , pageLength = 5
                    , lengthMenu = c(5, 10, 25, 50, 100, 1000)
@@ -69,6 +76,7 @@ shinyServer(function(input, output, session) {
     # df_sites
   }##expression~END
   , filter = "none"
+  , rownames = FALSE
   , options = list(scrollX = TRUE
                    , pageLength = 5
                    , lengthMenu = c(5, 10, 25, 50, 100, 1000)
@@ -76,13 +84,36 @@ shinyServer(function(input, output, session) {
                    , searching = FALSE)
   )##df_DT_sites~END
   
+  ## Participants ----
+  output$df_DT_particip <- DT::renderDT({
+    df_particips_editable()
+  }##expression~END
+  , editable = TRUE
+  , filter = "none"
+  # , rownames = FALSE
+  , options = list(dom = 't'  # Only show the table
+                   , paging = FALSE  # Disable paginatio
+                   # , pageLength = 15
+                   , autoWidth = FALSE
+                   , searching = FALSE)
+  )##df_DT_metrics~END
+  
   # Edit tables ----
   # Update the data based on edits
+  ## df_samps ----
   observeEvent(input$df_DT_samps_cell_edit, {
     cell <- input$df_DT_samps_cell_edit
-    newdf <- df_samps_editable()
-    newdf[cell$row, cell$col] <- cell$value
-    df_samps_editable(newdf)
+    newdf_samps <- df_samps_editable()
+    newdf_samps[cell$row, cell$col] <- cell$value
+    df_samps_editable(newdf_samps)
+  }) #observeEvent ~ END
+  
+  ## df_particips ----
+  observeEvent(input$df_DT_particip_cell_edit, {
+    cell <- input$df_DT_particip_cell_edit
+    newdf_particips <- df_particips_editable()
+    newdf_particips[cell$row, cell$col] <- cell$value
+    df_particips_editable(newdf_particips)
   }) #observeEvent ~ END
   
   # Downloads ----
@@ -100,6 +131,21 @@ shinyServer(function(input, output, session) {
       }# function ~ END
   ) # downloadHandler ~ END
   
+  ## Participants ----
+  output$dwnld_particips <- downloadHandler(
+    filename = function() {
+      if (input$select_sampid == "") {
+        paste("Participant_comments", "_default_", Sys.Date(), ".csv")
+      } else {
+        paste0("Participant_comments", "_", input$select_sampid, "_", Sys.Date()
+               , ".csv")
+      }
+    }# function ~ END
+    , content = function(file) {
+      write.csv(df_particips_editable(), file, row.names = FALSE)
+    }# function ~ END
+  ) # downloadHandler ~ END
+  
   ## Edited sample table ----
   # Download the edited data
   output$downloadData <- downloadHandler(
@@ -110,6 +156,14 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       write.csv(df_samps_editable(), file, row.names = FALSE)
     }
-  )
+  ) # downloadHandler ~ END
+  
+  # Map ----
+  output$Map_Sites <- renderLeaflet({
+    leaflet(df_sites) %>%
+      addTiles() %>%
+      addMarkers(~Longitude, ~Latitude, popup = ~SampleID) %>% 
+      addMiniMap()
+  }) #renderLeaflet ~ END
 
 })##shinyServer ~ END

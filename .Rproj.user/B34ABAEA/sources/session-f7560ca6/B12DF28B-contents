@@ -10,17 +10,20 @@ library(shinydashboardPlus) # only using for footer
 library(DT)
 library(dplyr)
 library(tidyr)
+library(leaflet)
 
 ## tabs ----
 # sourced in global.R
 # ref in db_main_body.R
 # menu in db_main_sb.R
-db_main_sb                     <- source("external/db_main_sb.R"
-                                         , local = TRUE)$value
-db_main_body                   <- source("external/db_main_body.R"
-                                        , local = TRUE)$value
-tab_code_samp_review              <- source("external/tab_samp_review.R"
-                                         , local = TRUE)$value
+db_main_sb            <- source("external/db_main_sb.R"
+                                , local = TRUE)$value
+db_main_body          <- source("external/db_main_body.R"
+                                , local = TRUE)$value
+tab_code_samp_review  <- source("external/tab_samp_review.R"
+                                , local = TRUE)$value
+tab_code_map          <- source("external/tab_map.R"
+                                , local = TRUE)$value
 
 # Console Message ----
 message(paste0("Interactive: ", interactive()))
@@ -34,7 +37,11 @@ options(shiny.maxRequestSize = mb_limit * 1024^2)
 fn_samps <- "samples.csv"
 fn_sites <- "sites.csv"
 fn_metrics <- "metrics.csv"
+fn_particips <- "participants.csv"
 
 df_samps <- read.csv(file = file.path("Data", fn_samps))
 df_sites <- read.csv(file = file.path("Data", fn_sites))
 df_metrics <- read.csv(file = file.path("Data", fn_metrics))
+df_particips <- read.csv(file = file.path("Data", fn_particips))
+df_particips_v2 <- df_particips %>% 
+  mutate(Notes = "Add comments here")
