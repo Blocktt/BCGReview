@@ -14,9 +14,10 @@ function() {
             , solidHeader = TRUE
             , width = 9
             , textAreaInput( 
-              "notes_gencom", 
-              "Text input", 
-              value = "Hello World")
+              "notes_gencom"
+              , NULL
+              , value = "Record sample notes and those from specific reviewers.
+              Then download using the button below.")
             , downloadButton("dwnld_gencom", "Download"))
     ) # fluidRow ~ END
     , fluidRow(
